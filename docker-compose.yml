@@ -1,0 +1,41 @@
+services:
+  # само веб-приложение 
+  web_app:
+    container_name: web_app
+    build:
+      dockerfile: dockerfile
+      context: .
+    ports:
+      - 9000:9000
+    restart: always
+    networks:
+      - easyquiz_network
+
+  # база данных
+  mysql:
+    image: mysql:latest
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD: 12345678
+      - MYSQL_DATABASE: easyquiz_database
+      - MYSQL_USER: easyquiz_user
+      - MYSQL_PASSWORD: easyquiz_password
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  # веб-ui для базы данных
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: 12345678
+    ports:
+      - "8080:80"
+  
+  # redis
+  # возможно доп. приложение для cron задач
