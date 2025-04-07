@@ -9,35 +9,47 @@ type AnswersUseCase struct {
 }
 
 type AnswersUseCaseRepository interface {
-	Create(userID, quizID, questionID, answer int) error
-	GetAll(userID, quizID int) []entities.Answers
+	Create(userID, quizID, questionID uint, answer int) (uint, error)
+	GetAll(userID, quizID uint) ([]entities.Answers, error)
 }
 
 func NewAnswersUseCase(r AnswersUseCaseRepository, quizUseCase *QuizUseCase, resultUseCase *ResultUseCase) *AnswersUseCase {
 	return &AnswersUseCase{
-		Repository:  r,
-		QuizUseCase: quizUseCase,
+		Repository:    r,
+		QuizUseCase:   quizUseCase,
 		ResultUsecase: resultUseCase,
 	}
 }
 
-func (uc *AnswersUseCase) Register(userID, quizID, questionID, answer int) error {
+// Регистрация ответа пользователя на вопрос Квиза
+func (uc *AnswersUseCase) Register(userID, quizID, questionID uint, answer int) (uint, error) {
 	return uc.Repository.Create(userID, quizID, questionID, answer)
 }
 
-func (uc *AnswersUseCase) CheckAll(userID, quizID int) entities.Result {
-	answers := uc.Repository.GetAll(userID, quizID)
+// Проверка ответов на Квиз для конкретного пользователя с сохранением результата
+func (uc *AnswersUseCase) CheckAll(userID, quizID uint) (entities.Result, error) {
+	userAnswers, err := uc.Repository.GetAll(userID, quizID)
+	if err != nil {
+		return entities.Result{}, err
+	}
 	var (
 		questionsAmount         int
 		questionsAnsweredAmount int
 	)
-	questionsAmount = uc.QuizUseCase.GetQuizQuestionsAmount(quizID)
-	for _, answer := range answers {
-		if answer.Answer == uc.QuizUseCase.GetQuestion(&answer.QuizID, &answer.QuestionID, nil).Right {
+	questionsAmount, err = uc.QuizUseCase.GetQuizQuestionsAmount(quizID)
+	if err != nil {
+		return entities.Result{}, nil
+	}
+	for _, userAnswer := range userAnswers {
+		rightAnswer, err := uc.QuizUseCase.GetQuestion(userAnswer.QuizID, &userAnswer.QuestionID, nil)
+		if err != nil {
+			return entities.Result{}, err
+		}
+		if userAnswer.Answer == rightAnswer.Right {
 			questionsAnsweredAmount++
 		}
 	}
-	return uc.ResultUsecase.CreateResult(
+	resultID, err := uc.ResultUsecase.Create(
 		entities.Result{
 			UserID:                  userID,
 			QuizID:                  quizID,
@@ -45,4 +57,8 @@ func (uc *AnswersUseCase) CheckAll(userID, quizID int) entities.Result {
 			QuestionsAnsweredAmount: questionsAnsweredAmount,
 		},
 	)
+	if err != nil {
+		return entities.Result{}, err
+	}
+	return uc.ResultUsecase.Repository.Get(resultID)
 }

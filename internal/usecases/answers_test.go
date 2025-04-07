@@ -2,16 +2,19 @@ package usecases
 
 import (
 	"app/internal/entities"
+	"fmt"
 	"testing"
+
+	"gorm.io/gorm"
 )
 
 var (
-	USER_ID             int = 1
-	QUIZ_ID             int = 1
-	QUIZ_ANSWERS_AMOUNT int = 2
-	QUESTIONS               = []entities.Question{
+	USER_ID             uint = 1
+	QUIZ_ID             uint = 1
+	QUIZ_ANSWERS_AMOUNT int  = 2
+	QUESTIONS                = []entities.Question{
 		{
-			ID:      1,
+			Model:   gorm.Model{ID: 1},
 			QuizID:  QUIZ_ID,
 			Number:  1,
 			Text:    "Сколько пальцев на руке здорового человека?",
@@ -19,7 +22,7 @@ var (
 			Right:   1,
 		},
 		{
-			ID:      2,
+			Model:   gorm.Model{ID: 2},
 			QuizID:  QUIZ_ID,
 			Number:  2,
 			Text:    "Из чего делают окна?",
@@ -31,11 +34,11 @@ var (
 
 type MockAnswerRepositiry struct{}
 
-func (uc *MockAnswerRepositiry) Create(userID, quizID, questionID, answer int) error {
-	return nil
+func (uc *MockAnswerRepositiry) Create(userID, quizID, questionID uint, answer int) (uint, error) {
+	return 0, nil
 }
 
-func (uc *MockAnswerRepositiry) GetAll(userID, quizID int) []entities.Answers {
+func (uc *MockAnswerRepositiry) GetAll(userID, quizID uint) ([]entities.Answers, error) {
 	answers := []entities.Answers{
 		{
 			UserID:     USER_ID,
@@ -50,40 +53,47 @@ func (uc *MockAnswerRepositiry) GetAll(userID, quizID int) []entities.Answers {
 			Answer:     3,
 		},
 	}
-	return answers
+	return answers, nil
 }
 
 type MockQuizRepositiry struct{}
 
-func (uc *MockQuizRepositiry) CreateQuiz(quiz entities.Quiz) error {
-	return nil
+func (uc *MockQuizRepositiry) CreateQuiz(quiz entities.Quiz) (uint, error) {
+	return 0, nil
 }
 
-func (uc *MockQuizRepositiry) CreateQuestions(quizID int, questions []entities.Question) error {
-	return nil
+func (uc *MockQuizRepositiry) CreateQuestions(quizID uint, questions []entities.Question) ([]uint, error) {
+	return []uint{}, nil
 }
 
-func (uc *MockQuizRepositiry) GetAllQuestions(quizID int) []entities.Question {
-	return QUESTIONS
+func (uc *MockQuizRepositiry) GetAllQuestions(quizID uint) ([]entities.Question, error) {
+	return QUESTIONS, nil
 }
 
-func (uc *MockQuizRepositiry) GetQuestion(quizID, questionID int) entities.Question {
+func (uc *MockQuizRepositiry) GetQuestion(quizID, questionID uint) (entities.Question, error) {
 	for _, question := range QUESTIONS {
 		if question.ID == questionID {
-			return question
+			return question, nil
 		}
 	}
-	return entities.Question{}
+	return entities.Question{}, fmt.Errorf("no question found")
 }
 
-func (uc *MockQuizRepositiry) GetQuestionByNumber(quizID, lastNumber int) entities.Question {
-	return entities.Question{}
+func (uc *MockQuizRepositiry) GetQuestionByNumber(quizID uint, lastNumber int) (entities.Question, error) {
+	return entities.Question{}, nil
 }
 
-type MockResultRepository struct{}
+type MockResultRepository struct{
+	result entities.Result
+}
 
-func (uc *MockResultRepository) Create(result entities.Result) entities.Result {
-	return result
+func (uc *MockResultRepository) Create(result entities.Result) (uint, error) {
+	uc.result = result
+	return uc.result.ID, nil
+}
+
+func (uc *MockResultRepository) Get(resultID uint) (entities.Result, error) {
+	return uc.result, nil
 }
 
 // Тест кейс на проверку количесттва правильных ответов в квизе для пользователя
@@ -96,8 +106,11 @@ func TestCheckAll(t *testing.T) {
 	resultUseCase := NewResultUseCase(&resultRepo)
 	answerRepo := MockAnswerRepositiry{}
 	answerUseCase := NewAnswersUseCase(&answerRepo, quizUseCase, resultUseCase)
-	result := answerUseCase.CheckAll(USER_ID, QUIZ_ID)
+	result, err := answerUseCase.CheckAll(USER_ID, QUIZ_ID)
+	if err != nil {
+		t.Error("no result returned")
+	}
 	if result.Percent != 50 {
-		t.Errorf("test result != 50")
+		t.Error("test result != 50")
 	}
 }

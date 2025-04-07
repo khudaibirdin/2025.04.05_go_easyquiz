@@ -6,8 +6,8 @@ import (
 )
 
 type UserRepository interface {
-	Add(entities.User) error
-	Get(string) (entities.User, bool)
+	Add(entities.User) (uint, error)
+	Get(string) (entities.User, error)
 }
 
 type UserUsecase struct {
@@ -33,11 +33,11 @@ type UserRegisterRequest struct {
 }
 
 func (uc *UserUsecase) Register(user UserRegisterRequest) error {
-	_, userExists := uc.Repository.Get(user.Login)
-	if userExists {
+	_, err := uc.Repository.Get(user.Login)
+	if err != nil {
 		return fmt.Errorf("user is already exists")
 	}
-	err := uc.Repository.Add(
+	_, err = uc.Repository.Add(
 		entities.User{
 			Login:    user.Login,
 			Password: user.Password,

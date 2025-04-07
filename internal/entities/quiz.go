@@ -1,8 +1,10 @@
 package entities
 
+import "gorm.io/gorm"
+
 type Question struct {
-	ID      int
-	QuizID  int
+	gorm.Model
+	QuizID  uint
 	Number  int
 	Text    string
 	Answers []string
@@ -10,6 +12,7 @@ type Question struct {
 }
 
 type Quiz struct {
+	gorm.Model
 	User  User
 	Theme string
 }

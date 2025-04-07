@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"app/internal/entities"
+	"fmt"
 )
 
 type QuizUseCase struct {
@@ -9,45 +10,48 @@ type QuizUseCase struct {
 }
 
 type QuizUseCaseRepository interface {
-	CreateQuiz(quiz entities.Quiz) error
-	CreateQuestions(quizID int, questions []entities.Question) error
-	GetAllQuestions(quizID int) []entities.Question
-	GetQuestion(quizID, number int) entities.Question
-	GetQuestionByNumber(quizID, lastNumber int) entities.Question
+	CreateQuiz(quiz entities.Quiz) (uint, error)
+	CreateQuestions(quizID uint, questions []entities.Question) ([]uint, error)
+	GetAllQuestions(quizID uint) ([]entities.Question, error)
+	GetQuestion(quizID, number uint) (entities.Question, error)
+	GetQuestionByNumber(quizID uint, lastNumber int) (entities.Question, error)
 }
 
 func NewQuizUseCase(r QuizUseCaseRepository) *QuizUseCase {
 	return &QuizUseCase{Repository: r}
 }
 
-func (uc *QuizUseCase) CreateQuiz(quiz entities.Quiz) {
-	uc.Repository.CreateQuiz(quiz)
+// Создание Квиза
+func (uc *QuizUseCase) CreateQuiz(quiz entities.Quiz) (uint, error) {
+	return uc.Repository.CreateQuiz(quiz)
 }
 
-func (uc *QuizUseCase) CreateQuestions(quizID int, questions []entities.Question) error {
-	uc.Repository.CreateQuestions(quizID, questions)
-	return nil
+// Создание вопросов для квиза
+func (uc *QuizUseCase) CreateQuestions(quizID uint, questions []entities.Question) ([]uint, error) {
+	return uc.Repository.CreateQuestions(quizID, questions)
 }
 
-func (uc *QuizUseCase) GetQuestions(quizID int) []entities.Question {
+// Получение всех вопросов по ID Квиза
+func (uc *QuizUseCase) GetQuestions(quizID uint) ([]entities.Question, error) {
 	return uc.Repository.GetAllQuestions(quizID)
 }
 
-func (uc *QuizUseCase) CheckQuestion(questionID int) entities.Question {
-	return entities.Question{}
-}
-
-func (uc *QuizUseCase) GetQuestion(quizID, questionID, lastNumber *int) entities.Question {
+// Получение вопроса из Квиза по ID или по номеру
+func (uc *QuizUseCase) GetQuestion(quizID uint, questionID *uint, lastNumber *int) (entities.Question, error) {
 	if lastNumber != nil {
-		return uc.Repository.GetQuestionByNumber(*quizID, *lastNumber+1)
+		return uc.Repository.GetQuestionByNumber(quizID, *lastNumber+1)
 	}
 	if questionID != nil {
-		return uc.Repository.GetQuestion(*quizID, *questionID)
+		return uc.Repository.GetQuestion(quizID, *questionID)
 	}
-	return entities.Question{}
-
+	return entities.Question{}, fmt.Errorf("question get error")
 }
 
-func (uc *QuizUseCase) GetQuizQuestionsAmount(quizID int) int {
-	return len(uc.Repository.GetAllQuestions(quizID))
+// Получение количества вопросов в Квизе
+func (uc *QuizUseCase) GetQuizQuestionsAmount(quizID uint) (int, error) {
+	questions, err := uc.Repository.GetAllQuestions(quizID)
+	if err != nil {
+		return 0, err
+	}
+	return len(questions), nil
 }
