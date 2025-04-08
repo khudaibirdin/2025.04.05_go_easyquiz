@@ -3,11 +3,13 @@ package usecases
 import (
 	"app/internal/entities"
 	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepository interface {
 	Add(entities.User) (uint, error)
-	Get(string) (entities.User, error)
+	Get(username string) (entities.User, error)
 }
 
 type UserUsecase struct {
@@ -18,20 +20,12 @@ func NewUserUsecase(r UserRepository) *UserUsecase {
 	return &UserUsecase{Repository: r}
 }
 
-// func (uc *UserUsecase) Login(login, password string) (string, bool) {
-// 	user, userExists := uc.Repository.Get(name)
-// 	if userExists != true {
-// 		return false
-// 	}
-
-// 	return true
-// }
-
 type UserRegisterRequest struct {
 	Login    string
 	Password string
 }
 
+// Регистрация пользователя
 func (uc *UserUsecase) Register(user UserRegisterRequest) error {
 	_, err := uc.Repository.Get(user.Login)
 	if err != nil {
@@ -47,4 +41,17 @@ func (uc *UserUsecase) Register(user UserRegisterRequest) error {
 		return fmt.Errorf("can't create user")
 	}
 	return nil
+}
+
+// Логин пользователя, проверка существования пользователя
+func (uc *UserUsecase) Login(username, password string) (entities.User, error) {
+	user, err := uc.Repository.Get(username)
+	if err != nil {
+		return entities.User{}, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return entities.User{}, err
+	}
+	return user, nil
 }
