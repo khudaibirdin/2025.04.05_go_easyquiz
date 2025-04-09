@@ -1,12 +1,11 @@
 package main
 
 import (
-	"app/internal/config"
 	"app/internal/app"
+	"app/internal/config"
 )
 
 func main() {
-	cfg := config.New()
-
-	app.Run(*cfg)
+	cfg := config.New("configs/local.yml")
+	app.Run(cfg)
 }

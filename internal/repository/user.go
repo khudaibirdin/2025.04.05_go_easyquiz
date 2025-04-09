@@ -2,6 +2,7 @@ package repository
 
 import (
 	"app/internal/entities"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -21,6 +22,11 @@ func (r *UserRepository) Add(newUser entities.User) (uint, error) {
 	return newUser.ID, result.Error
 }
 
-func (r *UserRepository) Get(string) (entities.User, error) {
-	return entities.User{}, nil
+func (r *UserRepository) Get(string) (*entities.User, error) {
+	user := &entities.User{}
+	result := r.db.First(user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return user, result.Error
 }

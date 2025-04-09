@@ -16,14 +16,16 @@ services:
     image: mysql:latest
     restart: always
     environment:
-      - MYSQL_ROOT_PASSWORD: 12345678
-      - MYSQL_DATABASE: easyquiz_database
-      - MYSQL_USER: easyquiz_user
-      - MYSQL_PASSWORD: easyquiz_password
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: easyquiz_database
+      MYSQL_USER: easyquiz_user
+      MYSQL_PASSWORD: easyquiz_password
     volumes:
       - ./mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
+    networks:
+      - easyquiz_network
 
   # веб-ui для базы данных
   phpmyadmin:
@@ -36,6 +38,12 @@ services:
       MYSQL_ROOT_PASSWORD: 12345678
     ports:
       - "8080:80"
+    networks:
+      - easyquiz_network
   
   # redis
   # возможно доп. приложение для cron задач
+
+networks:
+  easyquiz_network:
+    driver: bridge

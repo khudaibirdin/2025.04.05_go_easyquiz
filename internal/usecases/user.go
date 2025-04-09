@@ -9,7 +9,7 @@ import (
 
 type UserRepository interface {
 	Add(entities.User) (uint, error)
-	Get(username string) (entities.User, error)
+	Get(username string) (*entities.User, error)
 }
 
 type UserUsecase struct {
@@ -27,14 +27,24 @@ type UserRegisterRequest struct {
 
 // Регистрация пользователя
 func (uc *UserUsecase) Register(user UserRegisterRequest) error {
-	_, err := uc.Repository.Get(user.Login)
+	if len(user.Password) < 8 {
+		return fmt.Errorf("password's len is less than 8")
+	}
+	userExists, err := uc.Repository.Get(user.Login)
 	if err != nil {
+		return fmt.Errorf("database error: %s", err)
+	}
+	if userExists != nil {
 		return fmt.Errorf("user is already exists")
 	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+    if err != nil {
+        return fmt.Errorf("failed to hash password: %w", err)
+    }
 	_, err = uc.Repository.Add(
 		entities.User{
 			Login:    user.Login,
-			Password: user.Password,
+			Password: string(hashedPassword),
 		},
 	)
 	if err != nil {
@@ -53,5 +63,5 @@ func (uc *UserUsecase) Login(username, password string) (entities.User, error) {
 	if err != nil {
 		return entities.User{}, err
 	}
-	return user, nil
+	return *user, nil
 }
