@@ -23,6 +23,7 @@ func NewAnswersUseCase(r AnswersUseCaseRepository, quizUseCase *QuizUseCase, res
 
 // Регистрация ответа пользователя на вопрос Квиза
 func (uc *AnswersUseCase) Register(userID, quizID, questionID uint, answer int) (uint, error) {
+	//TODO добавить проверку по таймауту квиза, чтобы не выполнялся тест сколько угодно времени
 	return uc.Repository.Create(userID, quizID, questionID, answer)
 }
 

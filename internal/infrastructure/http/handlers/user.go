@@ -3,6 +3,7 @@ package handlers
 import (
 	"app/internal/config"
 	"app/internal/usecases"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,14 +30,22 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	}
 	var req LoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request data",
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(
+			fiber.Map{
+				"success": false,
+				"error":   fmt.Sprintf("Invalid request data, error: %s", err),
+			},
+		)
 	}
 
 	user, err := h.UseCase.Login(req.Login, req.Password)
 	if err != nil {
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return c.Status(fiber.StatusUnauthorized).JSON(
+			fiber.Map{
+				"success": false,
+				"error":   fmt.Sprintf("Error while login, error: %s", err),
+			},
+		)
 	}
 	jwtClaims := jwt.MapClaims{
 		"name": user.Login,
@@ -52,7 +61,9 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	}
 	return c.JSON(
 		fiber.Map{
-			"jwt": t,
+			"success": true,
+			"error":   nil,
+			"jwt":     t,
 		},
 	)
 }
@@ -64,9 +75,19 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 			"error": "Invalid request data",
 		})
 	}
-	err := h.UseCase.Register(req)
+	userID, err := h.UseCase.Register(req)
 	if err != nil {
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return c.Status(fiber.StatusUnauthorized).JSON(
+			fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+			},
+		)
 	}
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(fiber.StatusOK).JSON(
+		fiber.Map{
+			"success": true,
+			"id":      userID,
+		},
+	)
 }

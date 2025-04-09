@@ -66,21 +66,21 @@ func (uc *MockQuizRepositiry) CreateQuestions(quizID uint, questions []entities.
 	return []uint{}, nil
 }
 
-func (uc *MockQuizRepositiry) GetAllQuestions(quizID uint) ([]entities.Question, error) {
-	return QUESTIONS, nil
+func (uc *MockQuizRepositiry) GetAllQuestions(quizID uint) (*[]entities.Question, error) {
+	return &QUESTIONS, nil
 }
 
-func (uc *MockQuizRepositiry) GetQuestion(quizID, questionID uint) (entities.Question, error) {
+func (uc *MockQuizRepositiry) GetQuestion(quizID, questionID uint) (*entities.Question, error) {
 	for _, question := range QUESTIONS {
 		if question.ID == questionID {
-			return question, nil
+			return &question, nil
 		}
 	}
-	return entities.Question{}, fmt.Errorf("no question found")
+	return nil, fmt.Errorf("no question found")
 }
 
-func (uc *MockQuizRepositiry) GetQuestionByNumber(quizID uint, lastNumber int) (entities.Question, error) {
-	return entities.Question{}, nil
+func (uc *MockQuizRepositiry) GetQuestionByNumber(quizID uint, lastNumber int) (*entities.Question, error) {
+	return nil, nil
 }
 
 type MockResultRepository struct{

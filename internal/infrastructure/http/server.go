@@ -49,8 +49,8 @@ func (s *Server) Init(db *gorm.DB) {
 			Key:    []byte(s.Config.HTTP.JWTKey),
 		},
 	}))
-	s.Server.Post(
-		"/quiz",
-		handlers.NewUserHandler(*usecases.NewQuizUseCase(repository.NewQuizRepository(db)), s.Config).CreateQuiz,
-	)
+	// s.Server.Post(
+	// 	"/quiz",
+	// 	handlers.NewUserHandler(*usecases.NewQuizUseCase(repository.NewQuizRepository(db)), s.Config).CreateQuiz,
+	// )
 }

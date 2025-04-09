@@ -26,31 +26,31 @@ type UserRegisterRequest struct {
 }
 
 // Регистрация пользователя
-func (uc *UserUsecase) Register(user UserRegisterRequest) error {
+func (uc *UserUsecase) Register(user UserRegisterRequest) (uint, error) {
 	if len(user.Password) < 8 {
-		return fmt.Errorf("password's len is less than 8")
+		return 0, fmt.Errorf("password's len is less than 8")
 	}
 	userExists, err := uc.Repository.Get(user.Login)
 	if err != nil {
-		return fmt.Errorf("database error: %s", err)
+		return 0, fmt.Errorf("database error: %s", err)
 	}
 	if userExists != nil {
-		return fmt.Errorf("user is already exists")
+		return 0, fmt.Errorf("user is already exists")
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
     if err != nil {
-        return fmt.Errorf("failed to hash password: %w", err)
+        return 0, fmt.Errorf("failed to hash password: %w", err)
     }
-	_, err = uc.Repository.Add(
+	userID, err := uc.Repository.Add(
 		entities.User{
 			Login:    user.Login,
 			Password: string(hashedPassword),
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("can't create user")
+		return 0, fmt.Errorf("can't create user")
 	}
-	return nil
+	return userID, nil
 }
 
 // Логин пользователя, проверка существования пользователя

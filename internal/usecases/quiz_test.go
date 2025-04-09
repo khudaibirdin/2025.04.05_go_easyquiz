@@ -18,24 +18,24 @@ func (uc *MockQuizUseCaseRepository) CreateQuiz(quiz entities.Quiz) (uint, error
 func (uc *MockQuizUseCaseRepository) CreateQuestions(quizID uint, questions []entities.Question) ([]uint, error) {
 	return []uint{}, nil
 }
-func (uc *MockQuizUseCaseRepository) GetAllQuestions(quizID uint) ([]entities.Question, error) {
-	return []entities.Question{}, nil
+func (uc *MockQuizUseCaseRepository) GetAllQuestions(quizID uint) (*[]entities.Question, error) {
+	return &[]entities.Question{}, nil
 }
-func (uc *MockQuizUseCaseRepository) GetQuestion(quizID, questionID uint) (entities.Question, error) {
+func (uc *MockQuizUseCaseRepository) GetQuestion(quizID, questionID uint) (*entities.Question, error) {
 	for _, question := range QUESTIONS {
 		if question.ID == questionID {
-			return question, nil
+			return &question, nil
 		}
 	}
-	return entities.Question{}, fmt.Errorf("no right question by ID")
+	return nil, fmt.Errorf("no right question by ID")
 }
-func (uc *MockQuizUseCaseRepository) GetQuestionByNumber(quizID uint, number int) (entities.Question, error) {
+func (uc *MockQuizUseCaseRepository) GetQuestionByNumber(quizID uint, number int) (*entities.Question, error) {
 	for _, question := range QUESTIONS {
 		if question.Number == number {
-			return question, nil
+			return &question, nil
 		}
 	}
-	return entities.Question{}, fmt.Errorf("no right question by number")
+	return nil, fmt.Errorf("no right question by number")
 }
 
 // Тест на получение вопроса по ID
