@@ -15,13 +15,13 @@ import (
 
 type Server struct {
 	Server fiber.App
-	Config    *config.Config
+	Config *config.Config
 }
 
 func New(config *config.Config) *Server {
 	s := &Server{
 		Server: *fiber.New(),
-		Config:    config,
+		Config: config,
 	}
 	return s
 }
@@ -46,11 +46,32 @@ func (s *Server) Init(db *gorm.DB) {
 	s.Server.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{
 			JWTAlg: jwtware.RS256,
-			Key:    []byte(s.Config.HTTP.JWTKey),
+			Key:    s.Config.HTTP.PublicKey,
 		},
 	}))
+	// создание квиза
+	s.Server.Post(
+		"/quiz",
+		handlers.NewQuizHandler(*usecases.NewQuizUseCase(repository.NewQuizRepository(db)), s.Config).CreateQuiz,
+	)
+	// // создание вопроса для квиза
 	// s.Server.Post(
+	// 	"/quiz/:quiz_id/question",
+	// )
+	// // получение информации о квизах
+	// s.Server.Get(
 	// 	"/quiz",
-	// 	handlers.NewUserHandler(*usecases.NewQuizUseCase(repository.NewQuizRepository(db)), s.Config).CreateQuiz,
+	// )
+	// // получение информации о конкретном квизе
+	// s.Server.Get(
+	// 	"/quiz/:quiz_id",
+	// )
+	// // получение вопросов по конкретному квизу
+	// s.Server.Get(
+	// 	"/quiz/:quiz_id/question",
+	// )
+	// // получение конкретного вопроса по конкретному квизу
+	// s.Server.Get(
+	// 	"/quiz/:quiz_id/question/:question_id",
 	// )
 }

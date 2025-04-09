@@ -1,18 +1,21 @@
 package config
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/golang-jwt/jwt"
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
 	HTTP struct {
-		Host   string `yaml:"host"`
-		Port   string `yaml:"port"`
-		JWTKey string `yaml:"jwt_key"`
+		Host       string `yaml:"host"`
+		Port       string `yaml:"port"`
+		Privatekey *rsa.PrivateKey
+		PublicKey  *rsa.PublicKey
 	} `yaml:"http"`
 	Database struct {
 		MySQL struct {
@@ -46,5 +49,19 @@ func New(path string) *Config {
 	if err != nil {
 		panic(fmt.Sprintf("error with yaml parsing error: %s", err))
 	}
+	privateKey, err := loadPrivateKey()
+	if err != nil {
+		panic(fmt.Sprintf("Ошибка загрузки ключа: %s", err))
+	}
+	config.HTTP.Privatekey = privateKey
+	config.HTTP.PublicKey = &privateKey.PublicKey
 	return config
+}
+
+func loadPrivateKey() (*rsa.PrivateKey, error) {
+	privateKeyBytes, err := os.ReadFile("configs/private.pem")
+	if err != nil {
+		return nil, err
+	}
+	return jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
 }

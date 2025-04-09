@@ -23,14 +23,14 @@ func NewUserHandler(uc usecases.UserUsecase, cfg *config.Config) *UserHandler {
 }
 
 // Хэндлер Логина
-func (h *UserHandler) Login(c *fiber.Ctx) error {
+func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 	type LoginRequest struct {
 		Login    string `json:"login"`
 		Password string `json:"password"`
 	}
 	var req LoginRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(
 			fiber.Map{
 				"success": false,
 				"error":   fmt.Sprintf("Invalid request data, error: %s", err),
@@ -40,7 +40,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 
 	user, err := h.UseCase.Login(req.Login, req.Password)
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(
+		return ctx.Status(fiber.StatusUnauthorized).JSON(
 			fiber.Map{
 				"success": false,
 				"error":   fmt.Sprintf("Error while login, error: %s", err),
@@ -48,18 +48,19 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		)
 	}
 	jwtClaims := jwt.MapClaims{
-		"name": user.Login,
+		"login": user.Login,
+		"id": user.ID,
 		"exp":  time.Now().Add(time.Hour * 72).Unix(),
 	}
 	jwtToken := jwt.NewWithClaims(
-		jwt.SigningMethodHS256,
+		jwt.SigningMethodRS256,
 		jwtClaims,
 	)
-	t, err := jwtToken.SignedString([]byte(h.Config.HTTP.JWTKey))
+	t, err := jwtToken.SignedString(h.Config.HTTP.Privatekey)
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
-	return c.JSON(
+	return ctx.JSON(
 		fiber.Map{
 			"success": true,
 			"error":   nil,

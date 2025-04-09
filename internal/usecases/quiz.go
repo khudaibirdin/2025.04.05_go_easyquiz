@@ -11,7 +11,7 @@ type QuizUseCase struct {
 
 type QuizUseCaseRepository interface {
 	CreateQuiz(quiz entities.Quiz) (uint, error)
-	CreateQuestions(quizID uint, questions []entities.Question) ([]uint, error)
+	CreateQuestions(questions []entities.Question) ([]uint, error)
 	GetAllQuestions(quizID uint) (*[]entities.Question, error)
 	GetQuestion(quizID, questionID uint) (*entities.Question, error)
 	GetQuestionByNumber(quizID uint, number int) (*entities.Question, error)
@@ -27,8 +27,8 @@ func (uc *QuizUseCase) CreateQuiz(quiz entities.Quiz) (uint, error) {
 }
 
 // Создание вопросов для квиза
-func (uc *QuizUseCase) CreateQuestions(quizID uint, questions []entities.Question) ([]uint, error) {
-	return uc.Repository.CreateQuestions(quizID, questions)
+func (uc *QuizUseCase) CreateQuestions(questions []entities.Question) ([]uint, error) {
+	return uc.Repository.CreateQuestions(questions)
 }
 
 // Получение всех вопросов по ID Квиза
