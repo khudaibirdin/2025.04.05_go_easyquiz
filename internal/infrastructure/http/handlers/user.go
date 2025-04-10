@@ -4,10 +4,8 @@ import (
 	"app/internal/config"
 	"app/internal/usecases"
 	"fmt"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserHandler struct {
@@ -47,24 +45,16 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 			},
 		)
 	}
-	jwtClaims := jwt.MapClaims{
-		"login": user.Login,
-		"id": user.ID,
-		"exp":  time.Now().Add(time.Hour * 72).Unix(),
-	}
-	jwtToken := jwt.NewWithClaims(
-		jwt.SigningMethodRS256,
-		jwtClaims,
-	)
-	t, err := jwtToken.SignedString(h.Config.HTTP.Privatekey)
+	token, err := Token{User: &user}.Generate()
 	if err != nil {
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
+	
 	return ctx.JSON(
 		fiber.Map{
 			"success": true,
 			"error":   nil,
-			"jwt":     t,
+			"jwt":     token,
 		},
 	)
 }

@@ -36,7 +36,7 @@ func (r *QuizRepository) CreateQuestions(questions []entities.Question) ([]uint,
 
 func (r *QuizRepository) GetAllQuestions(quizID uint) (*[]entities.Question, error) {
 	var questions []entities.Question
-	result := r.db.Where("quiz_id = ?", quizID).Find(questions)
+	result := r.db.Where("quiz_id = ?", quizID).Find(&questions)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

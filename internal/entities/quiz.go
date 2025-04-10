@@ -1,18 +1,29 @@
 package entities
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Question struct {
 	gorm.Model
-	QuizID  uint
-	Number  int
-	Text    string
-	Answers []string
-	Right   int
+	QuizID        uint
+	Quiz          Quiz
+	Number        int
+	Text          string
+	RightAnswerID uint
+}
+
+type AnswerVariants struct {
+	gorm.Model
+	QuestionID uint
+	Question   Question
+	Text       string
 }
 
 type Quiz struct {
 	gorm.Model
-	User  User
-	Theme string
+	UserID         uint
+	User           User
+	Theme          string
+	TimeOutMinutes int
 }

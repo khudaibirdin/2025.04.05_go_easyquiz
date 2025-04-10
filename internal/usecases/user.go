@@ -9,7 +9,8 @@ import (
 
 type UserRepository interface {
 	Add(entities.User) (uint, error)
-	Get(username string) (*entities.User, error)
+	GetByUserName(username string) (*entities.User, error)
+	Get(userID uint) (*entities.User, error)
 }
 
 type UserUsecase struct {
@@ -30,7 +31,7 @@ func (uc *UserUsecase) Register(user UserRegisterRequest) (uint, error) {
 	if len(user.Password) < 8 {
 		return 0, fmt.Errorf("password's len is less than 8")
 	}
-	userExists, err := uc.Repository.Get(user.Login)
+	userExists, err := uc.Repository.GetByUserName(user.Login)
 	if err != nil {
 		return 0, fmt.Errorf("database error: %s", err)
 	}
@@ -55,7 +56,7 @@ func (uc *UserUsecase) Register(user UserRegisterRequest) (uint, error) {
 
 // Логин пользователя, проверка существования пользователя
 func (uc *UserUsecase) Login(username, password string) (entities.User, error) {
-	user, err := uc.Repository.Get(username)
+	user, err := uc.Repository.GetByUserName(username)
 	if err != nil {
 		return entities.User{}, err
 	}

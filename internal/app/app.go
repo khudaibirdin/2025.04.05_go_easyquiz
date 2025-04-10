@@ -1,8 +1,8 @@
 package app
 
 import (
+	"app/internal/adapters/database"
 	"app/internal/config"
-	"app/internal/database"
 	"app/internal/infrastructure/http"
 )
 

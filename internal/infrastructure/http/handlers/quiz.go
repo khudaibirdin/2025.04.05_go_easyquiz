@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"app/internal/config"
-	// "app/internal/entities"
-	"app/internal/usecases"
 	"fmt"
+	"strconv"
+
+	"app/internal/config"
+	"app/internal/entities"
+	"app/internal/usecases"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type QuizHandler struct {
@@ -22,26 +23,106 @@ func NewQuizHandler(uc usecases.QuizUseCase, cfg *config.Config) *QuizHandler {
 	}
 }
 
+// Создание квиза
 func (h *QuizHandler) CreateQuiz(ctx *fiber.Ctx) error {
 	type CreateQuizRequest struct {
 		Theme string `json:"theme"`
 	}
 	var createQuizRequest CreateQuizRequest
 	if err := ctx.BodyParser(&createQuizRequest); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(
-			fiber.Map{
-				"success": false,
-				"error":   fmt.Sprintf("Invalid request data, error: %s", err),
-			},
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			fmt.Sprintf("Invalid request data, error: %s", err),
 		)
 	}
-	user := ctx.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	userId := claims["id"].(uint)
-	h.UseCase.CreateQuiz(
+	userID := ctx.Locals("userID").(uint)
+	quizID, err := h.UseCase.CreateQuiz(
 		entities.Quiz{
-			User: 
+			UserID: userID,
+			Theme:  createQuizRequest.Theme,
 		},
 	)
-	return ctx.SendStatus(fiber.StatusOK)
+	if err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			fmt.Sprintf("quiz creation error: %s", err),
+		)
+	}
+	return SetSuccessResponse(
+		ctx,
+		true,
+		quizID,
+	)
+}
+
+// Начало теста
+func (h *QuizHandler) StartQuiz(ctx *fiber.Ctx) error {
+	userID := ctx.Locals("userID").(uint)
+	quizIDstr := ctx.Params("quiz_id")
+	quizID, err := strconv.Atoi(quizIDstr)
+	if err != nil {
+		SetBadRequestResponse(
+			ctx,
+			false,
+			"quizID param parsing error",
+		)
+	}
+	_, err = h.UseCase.StartQuiz(userID, uint(quizID))
+	if err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			err,
+		)
+	}
+	return SetSuccessResponse(
+		ctx,
+		true,
+		nil,
+	)
+}
+
+func (h *QuizHandler) CreateQuestion(ctx *fiber.Ctx) error {
+	quizIDstr := ctx.Params("quiz_id")
+	quizID, err := strconv.Atoi(quizIDstr)
+	if err != nil {
+		SetBadRequestResponse(
+			ctx,
+			false,
+			"quizID param parsing error",
+		)
+	}
+	type CreateQuestionRequest struct {
+		Number int
+		Text   string
+	}
+	var createQuestionRequest CreateQuestionRequest
+	if err := ctx.BodyParser(&createQuestionRequest); err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			fmt.Sprintf("Invalid request data, error: %s", err),
+		)
+	}
+	questionIDS, err := h.UseCase.CreateQuestions([]entities.Question{
+		{
+			QuizID: uint(quizID),
+			Number: createQuestionRequest.Number,
+			Text:   createQuestionRequest.Text,
+		},
+	})
+	if err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			err,
+		)
+	}
+	return SetSuccessResponse(
+		ctx,
+		true,
+		questionIDS,
+	)
 }

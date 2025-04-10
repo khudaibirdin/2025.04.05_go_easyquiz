@@ -6,7 +6,8 @@ import (
 )
 
 type QuizUseCase struct {
-	Repository QuizUseCaseRepository
+	Repository    QuizUseCaseRepository
+	ResultUseCase ResultUseCase
 }
 
 type QuizUseCaseRepository interface {
@@ -17,8 +18,11 @@ type QuizUseCaseRepository interface {
 	GetQuestionByNumber(quizID uint, number int) (*entities.Question, error)
 }
 
-func NewQuizUseCase(r QuizUseCaseRepository) *QuizUseCase {
-	return &QuizUseCase{Repository: r}
+func NewQuizUseCase(r QuizUseCaseRepository, resultUseCase ResultUseCase) *QuizUseCase {
+	return &QuizUseCase{
+		Repository:    r,
+		ResultUseCase: resultUseCase,
+	}
 }
 
 // Создание Квиза
@@ -54,4 +58,18 @@ func (uc *QuizUseCase) GetQuizQuestionsAmount(quizID uint) (int, error) {
 		return 0, err
 	}
 	return len(*questions), nil
+}
+
+func (uc *QuizUseCase) StartQuiz(userID, quizID uint) (uint, error) {
+	questions, err := uc.GetQuestions(quizID)
+	if err != nil {
+		return 0, err
+	}
+	return uc.ResultUseCase.Create(
+		entities.Result{
+			UserID:          userID,
+			QuizID:          quizID,
+			QuestionsAmount: len(*questions),
+		},
+	)
 }

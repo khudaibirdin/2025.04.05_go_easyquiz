@@ -10,7 +10,7 @@ type AnswersUseCase struct {
 
 type AnswersUseCaseRepository interface {
 	Create(userID, quizID, questionID uint, answer int) (uint, error)
-	GetAll(userID, quizID uint) ([]entities.Answers, error)
+	GetAll(userID, quizID uint) ([]entities.Answer, error)
 }
 
 func NewAnswersUseCase(r AnswersUseCaseRepository, quizUseCase *QuizUseCase, resultUseCase *ResultUseCase) *AnswersUseCase {
@@ -23,15 +23,14 @@ func NewAnswersUseCase(r AnswersUseCaseRepository, quizUseCase *QuizUseCase, res
 
 // Регистрация ответа пользователя на вопрос Квиза
 func (uc *AnswersUseCase) Register(userID, quizID, questionID uint, answer int) (uint, error) {
-	//TODO добавить проверку по таймауту квиза, чтобы не выполнялся тест сколько угодно времени
 	return uc.Repository.Create(userID, quizID, questionID, answer)
 }
 
 // Проверка ответов на Квиз для конкретного пользователя с сохранением результата
-func (uc *AnswersUseCase) CheckAll(userID, quizID uint) (entities.Result, error) {
+func (uc *AnswersUseCase) CheckAll(userID, quizID uint) (*entities.Result, error) {
 	userAnswers, err := uc.Repository.GetAll(userID, quizID)
 	if err != nil {
-		return entities.Result{}, err
+		return nil, err
 	}
 	var (
 		questionsAmount         int
@@ -39,14 +38,14 @@ func (uc *AnswersUseCase) CheckAll(userID, quizID uint) (entities.Result, error)
 	)
 	questionsAmount, err = uc.QuizUseCase.GetQuizQuestionsAmount(quizID)
 	if err != nil {
-		return entities.Result{}, nil
+		return nil, nil
 	}
 	for _, userAnswer := range userAnswers {
 		rightAnswer, err := uc.QuizUseCase.GetQuestion(userAnswer.QuizID, &userAnswer.QuestionID, nil)
 		if err != nil {
-			return entities.Result{}, err
+			return nil, err
 		}
-		if userAnswer.Answer == rightAnswer.Right {
+		if userAnswer.AnswerVariantsID == rightAnswer.RightAnswerID {
 			questionsAnsweredAmount++
 		}
 	}
@@ -59,7 +58,7 @@ func (uc *AnswersUseCase) CheckAll(userID, quizID uint) (entities.Result, error)
 		},
 	)
 	if err != nil {
-		return entities.Result{}, err
+		return nil, err
 	}
 	return uc.ResultUsecase.Repository.Get(resultID)
 }

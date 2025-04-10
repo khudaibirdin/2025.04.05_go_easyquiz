@@ -7,9 +7,9 @@ import (
 	"app/internal/usecases"
 	"fmt"
 
+	// jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-
-	jwtware "github.com/gofiber/contrib/jwt"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"gorm.io/gorm"
 )
 
@@ -35,29 +35,51 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Init(db *gorm.DB) {
+	s.Server.Use(logger.New(logger.Config{
+		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n",
+	}))
+
+	userRepository := repository.NewUserRepository(db)
+	userUseCase := usecases.NewUserUsecase(userRepository)
+	userHandler := handlers.NewUserHandler(*userUseCase, s.Config)
 	s.Server.Post(
 		"/login",
-		handlers.NewUserHandler(*usecases.NewUserUsecase(repository.NewUserRepository(db)), s.Config).Login,
+		userHandler.Login,
 	)
 	s.Server.Post(
 		"/register",
-		handlers.NewUserHandler(*usecases.NewUserUsecase(repository.NewUserRepository(db)), s.Config).Register,
+		userHandler.Register,
 	)
-	s.Server.Use(jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{
-			JWTAlg: jwtware.RS256,
-			Key:    s.Config.HTTP.PublicKey,
-		},
-	}))
+	// s.Server.Use(jwtware.New(jwtware.Config{
+	// 	SigningKey: jwtware.SigningKey{
+	// 		JWTAlg: jwtware.RS256,
+	// 		Key:    s.Config.HTTP.PublicKey,
+	// 	},
+	// 	SuccessHandler: handlers.JWTMiddleware,
+	// }))
+	quizRepository := repository.NewQuizRepository(db)
+	resultRepository := repository.NewResultRepository(db)
+	resultUseCase := usecases.NewResultUseCase(resultRepository)
+	quizUseCase := usecases.NewQuizUseCase(quizRepository, *resultUseCase)
+	quizHandler := handlers.NewQuizHandler(
+		*quizUseCase,
+		s.Config,
+	)
 	// создание квиза
 	s.Server.Post(
 		"/quiz",
-		handlers.NewQuizHandler(*usecases.NewQuizUseCase(repository.NewQuizRepository(db)), s.Config).CreateQuiz,
+		quizHandler.CreateQuiz,
+	)
+	// начать квиз
+	s.Server.Post(
+		"/quiz/:quiz_id/start",
+		quizHandler.StartQuiz,
 	)
 	// // создание вопроса для квиза
-	// s.Server.Post(
-	// 	"/quiz/:quiz_id/question",
-	// )
+	s.Server.Post(
+		"/quiz/:quiz_id/question",
+		quizHandler.CreateQuestion,
+	)
 	// // получение информации о квизах
 	// s.Server.Get(
 	// 	"/quiz",

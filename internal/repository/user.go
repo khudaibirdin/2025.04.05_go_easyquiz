@@ -22,9 +22,18 @@ func (r *UserRepository) Add(newUser entities.User) (uint, error) {
 	return newUser.ID, result.Error
 }
 
-func (r *UserRepository) Get(username string) (*entities.User, error) {
+func (r *UserRepository) GetByUserName(username string) (*entities.User, error) {
 	user := &entities.User{}
 	result := r.db.Where(&entities.User{Login: username}).First(user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return user, result.Error
+}
+
+func (r *UserRepository) Get(userID uint) (*entities.User, error) {
+	user := &entities.User{}
+	result := r.db.First(user, userID)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
