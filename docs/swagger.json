@@ -1,0 +1,10 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Сервис для работы с Квизами",
+        "title": "EasyQuiz",
+        "contact": {},
+        "version": "0.0.1"
+    },
+    "paths": {}
+}

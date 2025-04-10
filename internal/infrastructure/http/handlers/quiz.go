@@ -60,8 +60,7 @@ func (h *QuizHandler) CreateQuiz(ctx *fiber.Ctx) error {
 // Начало теста
 func (h *QuizHandler) StartQuiz(ctx *fiber.Ctx) error {
 	userID := ctx.Locals("userID").(uint)
-	quizIDstr := ctx.Params("quiz_id")
-	quizID, err := strconv.Atoi(quizIDstr)
+	quizID, err := ctx.ParamsInt("quiz_id")
 	if err != nil {
 		SetBadRequestResponse(
 			ctx,
