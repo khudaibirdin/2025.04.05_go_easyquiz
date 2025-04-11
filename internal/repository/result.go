@@ -21,6 +21,7 @@ func (r *ResultRepository) Create(newResult entities.Result) (uint, error) {
 	result := r.db.Create(&newResult)
 	return newResult.ID, result.Error
 }
+
 func (r *ResultRepository) Get(resultID uint) (*entities.Result, error) {
 	result := &entities.Result{}
 	res := r.db.First(result, resultID)

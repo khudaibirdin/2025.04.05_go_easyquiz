@@ -60,3 +60,26 @@ func (r *QuizRepository) GetQuestionByNumber(quizID uint, number int) (*entities
 	}
 	return question, result.Error
 }
+
+func (r *QuizRepository) CreateAnswerVariant(answerVariant entities.AnswerVariant) (uint, error) {
+	result := r.db.Create(&answerVariant)
+	return answerVariant.ID, result.Error
+}
+
+func (r *QuizRepository) GetAnswerVariant(answerVariantID uint) (*entities.AnswerVariant, error) {
+	answerVariant := &entities.AnswerVariant{}
+	result := r.db.First(answerVariant, answerVariantID)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return answerVariant, result.Error
+}
+
+func (r *QuizRepository) GetQuestionAnswerVariants(questionID uint) (*[]entities.AnswerVariant, error) {
+	var answerVariants []entities.AnswerVariant
+	result := r.db.Where("question_id = ?", questionID).Find(&answerVariants)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &answerVariants, result.Error
+}

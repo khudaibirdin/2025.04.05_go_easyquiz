@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"time"
+
 	"app/internal/config"
 	"app/internal/entities"
-
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -33,6 +33,7 @@ type Token struct {
 	User *entities.User
 }
 
+// Создание токена по ID пользователя
 func (t Token) Generate() (string, error) {
 	jwtClaims := jwt.MapClaims{
 		"id":  t.User.ID,
@@ -45,6 +46,8 @@ func (t Token) Generate() (string, error) {
 	return jwtToken.SignedString(config.Get().HTTP.Privatekey)
 }
 
+// Добавленный Middleware для внутреннего определения ID пользователя
+// Просаживается в fiber.ctx.Locals("id")
 func JWTMiddleware(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(*jwt.Token)
 	claims, ok := user.Claims.(jwt.MapClaims)

@@ -6,22 +6,32 @@ import (
 )
 
 type QuizUseCase struct {
-	Repository    QuizUseCaseRepository
-	ResultUseCase ResultUseCase
+	Repository     QuizUseCaseRepository
+	ResultUseCase  ResultUseCase
+	// AnswersUseCase AnswersUseCase
 }
 
 type QuizUseCaseRepository interface {
+	// Квиз
 	CreateQuiz(quiz entities.Quiz) (uint, error)
+
+	// Вопросы для квиза
 	CreateQuestions(questions []entities.Question) ([]uint, error)
-	GetAllQuestions(quizID uint) (*[]entities.Question, error)
 	GetQuestion(quizID, questionID uint) (*entities.Question, error)
 	GetQuestionByNumber(quizID uint, number int) (*entities.Question, error)
+	GetAllQuestions(quizID uint) (*[]entities.Question, error)
+
+	// Варианты ответов для вопроса
+	CreateAnswerVariant(answerVariant entities.AnswerVariant) (uint, error)
+	GetAnswerVariant(answerVariantID uint) (*entities.AnswerVariant, error)
+	GetQuestionAnswerVariants(quizID uint) (*[]entities.AnswerVariant, error)
 }
 
 func NewQuizUseCase(r QuizUseCaseRepository, resultUseCase ResultUseCase) *QuizUseCase {
 	return &QuizUseCase{
-		Repository:    r,
-		ResultUseCase: resultUseCase,
+		Repository:     r,
+		ResultUseCase:  resultUseCase,
+		// AnswersUseCase: answersUseCase,
 	}
 }
 
@@ -72,4 +82,19 @@ func (uc *QuizUseCase) StartQuiz(userID, quizID uint) (uint, error) {
 			QuestionsAmount: len(*questions),
 		},
 	)
+}
+
+// Создание варианта ответа для вопроса
+func (uc *QuizUseCase) CreateAnswerVariant(answerVariant entities.AnswerVariant) (uint, error) {
+	return uc.Repository.CreateAnswerVariant(answerVariant)
+}
+
+// получение варианта ответа для вопроса по id
+func (uc *QuizUseCase) GetAnswerVariant(answerVariant uint) (*entities.AnswerVariant, error) {
+	return uc.Repository.GetAnswerVariant(answerVariant)
+}
+
+// получение всех вариантов ответа для вопроса по id квиза
+func (uc *QuizUseCase) GetQuestionAnswerVariants(questionID uint) (*[]entities.AnswerVariant, error) {
+	return uc.Repository.GetQuestionAnswerVariants(questionID)
 }

@@ -20,7 +20,9 @@ func NewUserHandler(uc usecases.UserUsecase, cfg *config.Config) *UserHandler {
 	}
 }
 
-// Хэндлер Логина
+// Логин пользователя, если ОК, то выдается JWT в JSON ответе
+//
+// TODO Возможна просадка в Cookie сразу в будуем
 func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 	type LoginRequest struct {
 		Login    string `json:"login"`
@@ -59,6 +61,7 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 	)
 }
 
+// Регистрация пользователя
 func (h *UserHandler) Register(c *fiber.Ctx) error {
 	var req usecases.UserRegisterRequest
 	if err := c.BodyParser(&req); err != nil {

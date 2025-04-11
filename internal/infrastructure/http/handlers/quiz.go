@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"strconv"
 
 	"app/internal/config"
 	"app/internal/entities"
@@ -83,9 +82,9 @@ func (h *QuizHandler) StartQuiz(ctx *fiber.Ctx) error {
 	)
 }
 
+// Создание вопроса
 func (h *QuizHandler) CreateQuestion(ctx *fiber.Ctx) error {
-	quizIDstr := ctx.Params("quiz_id")
-	quizID, err := strconv.Atoi(quizIDstr)
+	quizID, err := ctx.ParamsInt("quiz_id")
 	if err != nil {
 		SetBadRequestResponse(
 			ctx,
@@ -123,5 +122,83 @@ func (h *QuizHandler) CreateQuestion(ctx *fiber.Ctx) error {
 		ctx,
 		true,
 		questionIDS,
+	)
+}
+
+type CreateAnswerVariantRequest struct {
+	Text    string `json:"text"`
+	IsRight bool   `json:"is_right"`
+}
+
+// создание варианта ответа для вопроса
+func (h *QuizHandler) CreateAnswerVariant(ctx *fiber.Ctx) error {
+	questionID, err := ctx.ParamsInt("question_id")
+	if err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			err,
+		)
+	}
+	var createAnswerVariantRequest CreateAnswerVariantRequest
+	if err := ctx.BodyParser(&createAnswerVariantRequest); err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			fmt.Sprintf("Invalid request data, error: %s", err),
+		)
+	}
+	answerVariantID, err := h.UseCase.CreateAnswerVariant(
+		entities.AnswerVariant{
+			QuestionID: uint(questionID),
+			Text:       createAnswerVariantRequest.Text,
+			IsRight:    createAnswerVariantRequest.IsRight,
+		},
+	)
+	if err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			err,
+		)
+	}
+	return SetSuccessResponse(
+		ctx,
+		true,
+		answerVariantID,
+	)
+}
+
+type GetQuestionAnswersResponse struct {
+	ID   uint   `json:"id"`
+	Text string `json:"text"`
+}
+
+// Получение всех вариантов ответа для вопроса
+func (h *QuizHandler) GetQuestionAnswers(ctx *fiber.Ctx) error {
+	questionID, err := ctx.ParamsInt("question_id")
+	if err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			err,
+		)
+	}
+	answerVariants, err := h.UseCase.GetQuestionAnswerVariants(uint(questionID))
+	if err != nil {
+		return SetBadRequestResponse(
+			ctx,
+			false,
+			err,
+		)
+	}
+	var getQuestionAnswersResponse []GetQuestionAnswersResponse
+	for _, answerVariant := range *answerVariants {
+		getQuestionAnswersResponse = append(getQuestionAnswersResponse, GetQuestionAnswersResponse{answerVariant.ID, answerVariant.Text})
+	}
+	return SetSuccessResponse(
+		ctx,
+		true,
+		getQuestionAnswersResponse,
 	)
 }

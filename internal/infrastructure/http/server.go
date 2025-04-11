@@ -75,6 +75,8 @@ func (s *Server) Init(db *gorm.DB) {
 	quizRepository := repository.NewQuizRepository(db)
 	resultRepository := repository.NewResultRepository(db)
 	resultUseCase := usecases.NewResultUseCase(resultRepository)
+	// answerRepository := repository.NewAnswerRepository(db)
+	// answerUseCase := usecases.AnswersUseCase(answerRepository)
 	quizUseCase := usecases.NewQuizUseCase(quizRepository, *resultUseCase)
 	quizHandler := handlers.NewQuizHandler(
 		*quizUseCase,
@@ -94,6 +96,16 @@ func (s *Server) Init(db *gorm.DB) {
 	s.Server.Post(
 		"/quiz/:quiz_id/question",
 		quizHandler.CreateQuestion,
+	)
+	// создание ответа для квиза
+	s.Server.Post(
+		"/quiz/:quiz_id/question/:question_id/answer",
+		quizHandler.CreateAnswerVariant,
+	)
+	// получение вариантов ответа на вопрос
+	s.Server.Get(
+		"/quiz/:quiz_id/question/:question_id/answer",
+		quizHandler.GetQuestionAnswers,
 	)
 	// // получение информации о квизах
 	// s.Server.Get(

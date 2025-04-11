@@ -13,7 +13,7 @@ func main() {
 		&entities.User{},
 		&entities.Quiz{},
 		&entities.Answer{},
-		&entities.AnswerVariants{},
+		&entities.AnswerVariant{},
 		&entities.Question{},
 		&entities.Result{},
 	)

@@ -4,26 +4,34 @@ import (
 	"gorm.io/gorm"
 )
 
+// Модель вопроса в Квизе
+// Имеет текст вопроса, последовательный номер
 type Question struct {
 	gorm.Model
-	QuizID        uint
-	Quiz          Quiz
-	Number        int
-	Text          string
-	RightAnswerID uint
+	QuizID uint
+	Quiz   Quiz `gorm:"ForeignKey:QuizID"`
+	Number int
+	Text   string
 }
 
-type AnswerVariants struct {
+// Вариант ответа для Квиза
+// Связан с вопросом
+// Имеет текст ответа
+// Имеет статус "правильный/не правильный"
+type AnswerVariant struct {
 	gorm.Model
 	QuestionID uint
-	Question   Question
+	Question   Question `gorm:"ForeignKey:QuestionID"`
 	Text       string
+	IsRight    bool
 }
 
+// Модель Квиза
+// Связана с пользователем, создавшим квиз
 type Quiz struct {
 	gorm.Model
 	UserID         uint
-	User           User
+	User           User `gorm:"ForeignKey:UserID"`
 	Theme          string
-	TimeOutMinutes int
+	TimeOutMinutes int // время в минутах на выполнение квиза
 }
